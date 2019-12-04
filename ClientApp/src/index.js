@@ -1,7 +1,7 @@
 import 'bootstrap/dist/css/bootstrap.css';
 import React from 'react';
 import ReactDOM from 'react-dom';
-import { BrowserRouter } from 'react-router-dom';
+import { Router } from 'react-router-dom';
 import App from './App';
 import { unregister } from './registerServiceWorker';
 import { Auth0Provider } from "./react-auth0-spa";
@@ -27,11 +27,12 @@ ReactDOM.render(
       domain={config.domain}
       client_id={config.clientId}
       redirect_uri={window.location.origin}
+      audience={config.audience}
       onRedirectCallback={onRedirectCallback}
     >
-      <BrowserRouter basename={baseUrl} history={history}>
+      <Router basename={baseUrl} history={history}>
         <App />
-      </BrowserRouter>
+      </Router>
     </Auth0Provider>
   ),
   rootElement);

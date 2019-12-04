@@ -1,4 +1,5 @@
 {
   "domain": "dev-rbnosx6a.au.auth0.com",
-  "clientId": "pdlBgsTt79Osk2b4jGr2CjlEVwvTtN25"
+  "clientId": "pdlBgsTt79Osk2b4jGr2CjlEVwvTtN25",
+  "audience": "https://localhost:44361/"
 }
