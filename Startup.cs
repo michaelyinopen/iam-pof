@@ -6,6 +6,9 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using IamPof.Models;
+using Microsoft.EntityFrameworkCore;
+using AutoMapper;
 
 namespace IamPof
 {
@@ -25,12 +28,17 @@ namespace IamPof
             {
                 options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
                 options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-            }).AddJwtBearer(options =>
+            }).AddJwtBearer(options =>  
             {
                 options.Authority = "https://dev-rbnosx6a.au.auth0.com/";
                 options.Audience = "https://localhost:44361/";
             });
             services.AddControllersWithViews();
+
+            services.AddDbContext<IamPofDbContext>(options =>
+                options.UseSqlServer(Configuration.GetConnectionString("IamPofDb")));
+
+            services.AddAutoMapper(typeof(MappingProfile).Assembly);
 
             // In production, the React files will be served from this directory
             services.AddSpaStaticFiles(configuration =>
