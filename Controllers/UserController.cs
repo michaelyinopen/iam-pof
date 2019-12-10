@@ -5,13 +5,16 @@ using System.Security.Claims;
 using System.Threading.Tasks;
 using AutoMapper;
 using IamPof.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace IamPof.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class UserController : ControllerBase
     {
         public UserController(
@@ -25,25 +28,37 @@ namespace IamPof.Controllers
         private IamPofDbContext IamPofDbContext { get; }
         private IMapper Mapper { get; }
 
-        [HttpPut(Name = "CreateOrUpdateUser")]
-        public async Task<IActionResult> CreateOrUpdateUserAsync([FromBody]CreateOrUpdateUserDto createOrUpdateUserDto)
+        // note remember to urlEncode the "sub" in url
+        [HttpPut("{sub}", Name = "CreateOrUpdateUser")]
+        public async Task<ActionResult<UpdatedUserDto>> CreateOrUpdateUserAsync(string sub, [FromBody]CreateOrUpdateUserDto createOrUpdateUserDto)
         {
-            string sub = User.FindFirst("sub")?.Value;
+            string subClaim = HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (!string.Equals(sub, subClaim))
+            {
+                return BadRequest("Url does not match Sub Claim.");
+            }
             if (!string.Equals(sub, createOrUpdateUserDto.Sub))
             {
-                return BadRequest("Sub Claim does not match body.");
+                return BadRequest("Url does not match body.");
             }
 
             var user = Mapper.Map<User>(createOrUpdateUserDto);
+            var current = await IamPofDbContext.User.FirstOrDefaultAsync(u => u.Sub == sub);
             UpdatedUserDto updatedUserDto;
-            //if (createOrUpdateUserDto.Id is null)
-            //{   // create
-            //    IamPofDbContext.User.Add()
-            //}
-            //else
-            //{   // update
-            //}
-            return Ok();
+            if (current is null)
+            {   // create
+                IamPofDbContext.User.Add(user);
+                await IamPofDbContext.SaveChangesAsync();
+                updatedUserDto = Mapper.Map<UpdatedUserDto>(user);
+            }
+            else
+            {   // update
+                user.Id = current.Id;
+                IamPofDbContext.Entry(current).CurrentValues.SetValues(user);
+                await IamPofDbContext.SaveChangesAsync();
+                updatedUserDto = Mapper.Map<UpdatedUserDto>(user);
+            }
+            return Ok(updatedUserDto);
         }
     }
 }
