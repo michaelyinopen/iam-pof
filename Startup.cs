@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using IamPof.Models;
 using Microsoft.EntityFrameworkCore;
 using AutoMapper;
+using IamPof.Authorization;
 
 namespace IamPof
 {
@@ -24,14 +25,19 @@ namespace IamPof
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            string domain = $"https://{Configuration["Auth0:Domain"]}/";
             services.AddAuthentication(options =>
             {
                 options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
                 options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
             }).AddJwtBearer(options =>  
             {
-                options.Authority = "https://dev-rbnosx6a.au.auth0.com/";
-                options.Audience = "https://localhost:44361/";
+                options.Authority = domain;
+                options.Audience = Configuration["Auth0:ApiIdentifier"];
+            });
+            services.AddAuthorization(options =>
+            {
+                options.AddPolicy("create-or-update:user", policy => policy.Requirements.Add(new HasScopeRequirement("create-or-update:user", domain)));
             });
             services.AddControllersWithViews();
 
@@ -68,7 +74,6 @@ namespace IamPof
             app.UseRouting();
             app.UseAuthentication();
             app.UseAuthorization();
-
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllerRoute(

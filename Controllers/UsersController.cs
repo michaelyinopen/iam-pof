@@ -15,9 +15,9 @@ namespace IamPof.Controllers
     [Route("api/[controller]")]
     [ApiController]
     [Authorize]
-    public class UserController : ControllerBase
+    public class UsersController : ControllerBase
     {
-        public UserController(
+        public UsersController(
             IamPofDbContext iamPofDbContext,
             IMapper mapper)
         {
@@ -30,13 +30,10 @@ namespace IamPof.Controllers
 
         // note remember to urlEncode the "sub" in url
         [HttpPut("{sub}", Name = "CreateOrUpdateUser")]
+        //[Authorize("create-or-update:user")]
+        [Authorize()]
         public async Task<ActionResult<UpdatedUserDto>> CreateOrUpdateUserAsync(string sub, [FromBody]CreateOrUpdateUserDto createOrUpdateUserDto)
         {
-            string subClaim = HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (!string.Equals(sub, subClaim))
-            {
-                return BadRequest("Url does not match Sub Claim.");
-            }
             if (!string.Equals(sub, createOrUpdateUserDto.Sub))
             {
                 return BadRequest("Url does not match body.");

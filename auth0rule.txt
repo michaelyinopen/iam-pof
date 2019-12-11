@@ -1,0 +1,77 @@
+function (user, context, callback) {
+  console.log("begin rule: Update user profile identity via API");
+  const request = require("request");
+  function getAccessToken(domain, audience, clientId, clientSecret, cb) {
+    const cacheKey = clientId + '_token';
+    const cachedToken = global[cacheKey];
+    if (cachedToken && cachedToken.expirationDate > Date.now()) {
+        // token is valid
+        console.log('use client credential token from cache');
+        return cb(null, cachedToken.accessToken);
+    }
+    
+    // token not present or expired, get a fresh one
+    var options = { method: 'POST',
+      url: 'https://' + domain + '/oauth/token',
+      body:
+      { client_id: clientId,
+        client_secret: clientSecret,
+        audience: audience,
+        grant_type: 'client_credentials' },
+      json: true };
+
+    request(options, function (error, response, body) {
+      if (error) {
+        console.log('Error getting client credential token', error);
+        return cb("Error getting access token: " + error);
+      }
+      global[cacheKey] = {
+        accessToken: body.access_token,
+        // 60 seconds safe window time
+        expirationDate: Date.now() + (body.expires_in - 60) * 1000
+      };
+      console.log('got client credential token');
+      return cb(null, body.access_token);
+    });
+  }
+  
+  getAccessToken(
+    configuration.Auth0Domain, 
+    configuration.Auth0Audience, 
+    configuration.Auth0RuleClientId, 
+    configuration.Auth0RuleClientSecret, 
+    function(err, accessToken) {
+      if (err) {
+        console.log('Error after getting client credential token');
+        return callback(err);
+      }
+  		console.log("accessToken: " + JSON.stringify(accessToken));
+
+ 		 	const baseURL = "https://localhost:44361";
+  		console.log("user: " + JSON.stringify(user));
+     	const sub =  user.user_id;
+  		console.log("sub: " + sub);
+  		const userDto = {
+    		sub: sub,
+  		};
+
+  		const putURL = baseURL + '/Users/' + encodeURI(sub);
+  		console.log("PutURL: " + putURL);
+  		request({
+        method: 'PUT',
+        url: putURL,
+        json: userDto,
+        /*auth: {
+          bearer: accessToken
+        }*/
+      },
+      function(err, response, body) {
+        if (err) {
+        	console.log('Error in create or updating user via API', err);
+          return callback(err);
+        }
+        console.log('Success in create or updating user via API');
+        return callback(null, user, context);
+      });
+   });
+}
