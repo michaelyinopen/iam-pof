@@ -25,6 +25,11 @@ function (user, context, callback) {
         console.log('Error getting client credential token', error);
         return cb("Error getting access token: " + error);
       }
+      if (response.statusCode !== 200) {
+        console.log('Get Client credential token no 200 status code');
+        console.log('status code: ' + response.statusCode);
+        return cb("Get Client credential token no 200 status code");
+      }
       global[cacheKey] = {
         accessToken: body.access_token,
         // 60 seconds safe window time
@@ -47,7 +52,7 @@ function (user, context, callback) {
       }
   		console.log("accessToken: " + JSON.stringify(accessToken));
 
- 		 	const baseURL = "https://localhost:44361";
+ 		 	const baseURL = configuration.Auth0Audience;
   		console.log("user: " + JSON.stringify(user));
      	const sub =  user.user_id;
   		console.log("sub: " + sub);
@@ -55,22 +60,28 @@ function (user, context, callback) {
     		sub: sub,
   		};
 
-  		const putURL = baseURL + '/Users/' + encodeURI(sub);
+  		const putURL = baseURL + 'api/Users/' + encodeURI(sub);
   		console.log("PutURL: " + putURL);
   		request({
         method: 'PUT',
         url: putURL,
         json: userDto,
-        /*auth: {
+        auth: {
           bearer: accessToken
-        }*/
+        }
       },
       function(err, response, body) {
         if (err) {
         	console.log('Error in create or updating user via API', err);
           return callback(err);
         }
+      	if (response.statusCode !== 200 && response.statusCode !== 201) {
+        	console.log('create or updating user via API no success status code');
+        	console.log('status code: ' + response.statusCode);
+        	return callback('create or updating user via API no success status code');
+      	}
         console.log('Success in create or updating user via API');
+        console.log('body: ', body);
         return callback(null, user, context);
       });
    });
