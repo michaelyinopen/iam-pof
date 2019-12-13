@@ -22,9 +22,16 @@ export const Auth0Provider = ({
       const auth0FromHook = await createAuth0Client(initOptions);
       setAuth0(auth0FromHook);
 
-      if (window.location.search.includes("code=")) {
-        const { appState } = await auth0FromHook.handleRedirectCallback();
-        onRedirectCallback(appState);
+      if (window.location.search.includes("code=") || window.location.search.includes("error=")) {
+        try {
+          const { appState } = await auth0FromHook.handleRedirectCallback();
+          onRedirectCallback(appState);
+        }
+        catch (e){
+          console.error(e);
+          alert(`Problem with login. Please retry. If problem persists, please contact support.\n${e.message}`);
+          auth0FromHook.logout();
+        }
       }
 
       const isAuthenticated = await auth0FromHook.isAuthenticated();
