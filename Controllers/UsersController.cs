@@ -30,8 +30,8 @@ namespace IamPof.Controllers
 
         // note remember to urlEncode the "sub" in url
         [HttpPut("{sub}", Name = "CreateOrUpdateUser")]
-        //[Authorize("create-or-update:user")]
-        [Authorize()]
+        [Authorize("create-or-update:user")]
+        //[Authorize()]
         public async Task<ActionResult<UpdatedUserDto>> CreateOrUpdateUserAsync(string sub, [FromBody]CreateOrUpdateUserDto createOrUpdateUserDto)
         {
             if (!string.Equals(sub, createOrUpdateUserDto.Sub))
