@@ -10,6 +10,7 @@ using IamPof.Models;
 using Microsoft.EntityFrameworkCore;
 using AutoMapper;
 using IamPof.Authorization;
+using Microsoft.AspNetCore.Authorization;
 
 namespace IamPof
 {
@@ -39,6 +40,7 @@ namespace IamPof
             {
                 options.AddPolicy("create-or-update:user", policy => policy.Requirements.Add(new HasScopeRequirement("create-or-update:user", domain)));
             });
+            services.AddSingleton<IAuthorizationHandler, HasScopeHandler>();
             services.AddControllersWithViews();
 
             services.AddDbContext<IamPofDbContext>(options =>
